@@ -1,5 +1,6 @@
 package io.homo_efficio.spring.bean.validation.test.reactive;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
@@ -17,28 +18,35 @@ class HelloControllerTest {
     @Autowired
     private WebTestClient wtc;
 
+
+    @DisplayName("When validation fails, assertion is performed against null instead of actual value, which is not correct.")
     @Test
-    void newHello() {
+    void test_with_invalid_value() {
+        String EXPECTED_USERNAME = "Homo";  // username has @Size(max = 3)
         wtc.post().uri("/hello")
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(
-                    new HelloMessage(
-                        null,
-                        "Homo",
-                        "Hi all~ I am Homo Efficio"
-                    )
+                        new HelloMessage(
+                                null,
+                                EXPECTED_USERNAME,
+                                "Hi all~ I am " + EXPECTED_USERNAME + " Efficio"
+                        )
                 )
                 .exchange()
                 .expectBody(HelloMessage.class)
-                .consumeWith(it -> {
-                    HelloMessage helloMessage = it.getResponseBody();
+                .consumeWith(response -> {
+                    HelloMessage helloMessage = response.getResponseBody();
+
                     String username = Objects.requireNonNull(helloMessage).getUsername();
-                    System.out.println("msg.username: " + username);
                     String msg = Objects.requireNonNull(helloMessage).getMsg();
-                    System.out.println("msg.msg: " + msg);
-                    assertThat(username).isEqualTo("Homo");
-                    assertThat(msg).isEqualTo("Hi all~ I am Homo Efficio");
+
+                    System.out.println("message.username: " + username);
+                    System.out.println("message.msg: " + msg);
+
+                    assertThat(username).isEqualTo(EXPECTED_USERNAME);
+                    assertThat(msg).isEqualTo("Hi all~ I am " + EXPECTED_USERNAME + " Efficio");
                 });
     }
+
 }
